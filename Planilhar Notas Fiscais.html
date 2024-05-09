@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+        <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+        <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+        <title id="header-title"></title>
+    	<style>
+		body {
+			font-family: Arial, sans-serif; /* Set your desired font family here */
+		}
+	</style>
+    </head>
+    <body>
+	<h1>Planilhar Notas Fiscais</h1>
+	<label for="fileInput">Notas Fiscais (.xml):</label>
+	<input type="file" id="fileInput" accept=".xml" multiple><br><br>
+	<label for="fname">Nome do arquivo de saída:</label>
+	<input type="text" id="fname" name="fname" value="Planilha"><br><br>
+	<p id="status"></p>
+
+	<py-config>
+	{
+		"packages": ["pandas", "openpyxl"],
+		"files": {
+			"https://raw.githubusercontent.com/Setserp13/pyx/main/pyx/nfepy.py": "./pyx/nfepy.py",
+			"https://raw.githubusercontent.com/Setserp13/pyx/main/pyx/pyscriptx.py": "./pyx/pyscriptx.py",
+			"https://raw.githubusercontent.com/Setserp13/pyx/main/pyx/osx.py": "./pyx/osx.py"
+		}
+	}
+	</py-config>
+
+        <script type="py">
+		import pandas as pd
+		from pyx.pyscriptx import to_bytes, to_excel, FileList2BytesIO
+		from js import document
+		from pyodide.ffi import create_proxy
+		from pyx.nfepy import xmls2df
+		import xml.etree.ElementTree as ET
+
+		async def processFileList(event):
+			print('Fazendo...')
+			document.getElementById("status").textContent = 'Fazendo...'
+			files = document.getElementById("fileInput").files
+			nfes = await FileList2BytesIO(files)
+			nfes = [ET.parse(x).getroot() for x in nfes]
+			to_excel(xmls2df(nfes), f'{document.getElementById("fname").value}.xlsx')
+			print('Feito!')
+			document.getElementById("status").textContent = 'Feito!'
+		
+		on_change = create_proxy(processFileList)
+		document.getElementById("fileInput").addEventListener("change", on_change)
+	</script>
+    </body>
+</html>
